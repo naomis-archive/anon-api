@@ -1,89 +1,122 @@
-import { readFile } from "fs/promises";
-import http from "http";
-import https from "https";
+/* eslint-disable camelcase */
+import {
+  ActionRowBuilder,
+  ChannelType,
+  Client,
+  EmbedBuilder,
+  GatewayIntentBits,
+  InteractionType,
+  ModalActionRowComponentBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+} from "discord.js";
 
-import cors from "cors";
-import express from "express";
-import fetch from "node-fetch";
+import { ExtendedClient } from "./interfaces/ExtendedClient";
+import { generateQuestionImage } from "./modules/generateQuestionImage";
+import { twitterClient } from "./modules/twitterClient";
+import { serve } from "./server/serve";
 
 (async () => {
-  const HTTPEndpoint = express();
-  HTTPEndpoint.disable("x-powered-by");
-  HTTPEndpoint.use(express.json());
-  const allowedOrigins = ["https://anon.naomi.lgbt"];
+  const bot = new Client({
+    intents: [GatewayIntentBits.Guilds],
+  }) as ExtendedClient;
+  const twitter = twitterClient();
+  bot.token = process.env.BOT_TOKEN || process.exit(1);
+  bot.ownerId = process.env.USER_ID || process.exit(1);
 
-  HTTPEndpoint.use(
-    cors({
-      origin: (origin, callback) => {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
-    })
-  );
+  bot.on("ready", async () => {
+    const guild = await bot.guilds.fetch(process.env.HOME_GUILD || "");
+    const channel = await guild.channels.fetch(
+      process.env.QUESTION_CHANNEL || ""
+    );
+    if (!channel || channel.type !== ChannelType.GuildText) {
+      console.error("Channel not found or not a text channel.");
+      process.exit(1);
+    }
+    // eslint-disable-next-line require-atomic-updates
+    bot.channel = channel;
+    console.log("Bot is ready!");
+  });
 
-  HTTPEndpoint.post("/ask", async (req, res) => {
-    const { question, user } = req.body;
+  bot.on("interactionCreate", async (interaction) => {
+    if (interaction.type === InteractionType.ModalSubmit) {
+      await interaction.deferUpdate();
+      const messageId = interaction.customId.split("-")[1];
+      const message = await bot.channel.messages.fetch(messageId);
+      const question = message.embeds[0].description || "unknown";
+      const answer = interaction.fields.getTextInputValue("answer");
 
-    if (!question) {
-      res.status(400).send({ message: "No question provided." });
+      const oldEmbed = message.embeds[0];
+
+      const questionImage = await generateQuestionImage(question);
+
+      const media = await twitter.post("media/upload", {
+        media: questionImage,
+      });
+
+      await twitter.post("statuses/update", {
+        status: answer,
+        media_ids: media.media_id_string,
+      });
+
+      const newEmbed = new EmbedBuilder()
+        .setTitle(oldEmbed.title || "Answered Question!")
+        .setDescription(
+          oldEmbed.description ||
+            "Something went wrong and the question was lost."
+        )
+        .addFields([
+          {
+            name: oldEmbed.fields?.[0].name || "Asked By",
+            value: oldEmbed.fields?.[0].value || "Anonymous",
+          },
+          {
+            name: "Answer",
+            value: answer,
+          },
+        ]);
+      await interaction.message?.edit({
+        embeds: [newEmbed],
+        components: [],
+      });
     }
 
-    await fetch(process.env.WEBHOOK_URL as string, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        embeds: [
-          {
-            title: "New Question",
-            description: question,
-            fields: [
-              {
-                name: "Author",
-                value: user || "Anonymous",
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    if (interaction.isButton()) {
+      if (interaction.customId === "respond") {
+        if (interaction.user.id !== process.env.USER_ID) {
+          await interaction.reply({
+            content: "Only Naomi can answer these questions.",
+            ephemeral: true,
+          });
+          return;
+        }
 
-    res.status(200).json({ message: "Your question has been recieved!" });
+        const imageUrl = interaction.message.attachments.first()?.url;
+        const modal = new ModalBuilder()
+          .setCustomId(`res-${interaction.message.id}`)
+          .setTitle("Respond to this question!");
+
+        const input = new TextInputBuilder()
+          .setCustomId("answer")
+          .setLabel("What is your answer?")
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true)
+          // subtract an extra 2 characters for new lines.
+          .setMaxLength(280 - (imageUrl?.length || 0) - 2);
+
+        const row =
+          new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+            input
+          );
+        modal.addComponents(row);
+
+        await interaction.showModal(modal);
+      }
+    }
   });
 
-  const httpServer = http.createServer(HTTPEndpoint);
+  await serve(bot);
 
-  httpServer.listen(6080, () => {
-    console.log("HTTP server running on port 6080");
-  });
-
-  if (process.env.NODE_ENV === "production") {
-    const privateKey = await readFile(
-      "/etc/letsencrypt/live/anon-api.naomi.lgbt/privkey.pem",
-      "utf8"
-    );
-    const certificate = await readFile(
-      "/etc/letsencrypt/live/anon-api.naomi.lgbt/cert.pem",
-      "utf8"
-    );
-    const ca = await readFile(
-      "/etc/letsencrypt/live/anon-api.naomi.lgbt/chain.pem",
-      "utf8"
-    );
-
-    const credentials = {
-      key: privateKey,
-      cert: certificate,
-      ca: ca,
-    };
-
-    const httpsServer = https.createServer(credentials, HTTPEndpoint);
-    httpsServer.listen(6443, () => {
-      console.log("https server is live on port 6443");
-    });
-  }
+  await bot.login(process.env.BOT_TOKEN);
 })();
