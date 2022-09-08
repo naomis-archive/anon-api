@@ -1,12 +1,10 @@
-# Project Name
+# Naomi's Anonymous Inbox API
 
-Project Description
+This is the API for my anonymous inbox app.
 
 ## Live Version
 
-This page is not yet deployed.
-
-<!--This page is currently deployed. [View the live website.]()-->
+This page is currently deployed. [View the live website.](https://anon.naomi.lgbt)-->
 
 ## Feedback and Bugs
 
