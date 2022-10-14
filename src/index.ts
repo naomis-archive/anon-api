@@ -13,6 +13,7 @@ import {
 } from "discord.js";
 
 import { ExtendedClient } from "./interfaces/ExtendedClient";
+import { Category } from "./interfaces/Submission";
 import { generateQuestionImage } from "./modules/generateQuestionImage";
 import { twitterClient } from "./modules/twitterClient";
 import { serve } from "./server/serve";
@@ -42,14 +43,18 @@ import { serve } from "./server/serve";
   bot.on("interactionCreate", async (interaction) => {
     if (interaction.type === InteractionType.ModalSubmit) {
       await interaction.deferUpdate();
-      const messageId = interaction.customId.split("-")[1];
+      const [, messageId, category] = interaction.customId.split("-") as [
+        string,
+        string,
+        Category
+      ];
       const message = await bot.channel.messages.fetch(messageId);
       const question = message.embeds[0].description || "unknown";
       const answer = interaction.fields.getTextInputValue("answer");
 
       const oldEmbed = message.embeds[0];
 
-      const questionImage = await generateQuestionImage(question);
+      const questionImage = await generateQuestionImage(question, category);
 
       const media = await twitter.post("media/upload", {
         media: questionImage,
@@ -72,7 +77,7 @@ import { serve } from "./server/serve";
             value: oldEmbed.fields?.[0].value || "Anonymous",
           },
           {
-            name: "Answer",
+            name: "Response",
             value: answer,
           },
         ]);
@@ -83,7 +88,7 @@ import { serve } from "./server/serve";
     }
 
     if (interaction.isButton()) {
-      if (interaction.customId === "respond") {
+      if (interaction.customId.startsWith("respond")) {
         if (interaction.user.id !== process.env.USER_ID) {
           await interaction.reply({
             content: "Only Naomi can answer these questions.",
@@ -91,11 +96,10 @@ import { serve } from "./server/serve";
           });
           return;
         }
-
-        const imageUrl = interaction.message.attachments.first()?.url;
+        const category = interaction.customId.split("-")[1] as Category;
         const modal = new ModalBuilder()
-          .setCustomId(`res-${interaction.message.id}`)
-          .setTitle("Respond to this question!");
+          .setCustomId(`res-${interaction.message.id}-${category}`)
+          .setTitle("Enter Your Response");
 
         const input = new TextInputBuilder()
           .setCustomId("answer")
@@ -103,7 +107,7 @@ import { serve } from "./server/serve";
           .setStyle(TextInputStyle.Paragraph)
           .setRequired(true)
           // subtract an extra 2 characters for new lines.
-          .setMaxLength(280 - (imageUrl?.length || 0) - 2);
+          .setMaxLength(280);
 
         const row =
           new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

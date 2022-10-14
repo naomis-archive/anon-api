@@ -11,7 +11,9 @@ import {
 } from "discord.js";
 import express from "express";
 
+import { SubmissionButtonTitles, SubmissionTitles } from "../interfaces/Enums";
 import { ExtendedClient } from "../interfaces/ExtendedClient";
+import { Submission } from "../interfaces/Submission";
 
 /**
  * Module to start the webserver.
@@ -37,7 +39,7 @@ export const serve = async (bot: ExtendedClient) => {
   );
 
   HTTPEndpoint.post("/ask", async (req, res) => {
-    const { question, user } = req.body;
+    const { question, user, category } = req.body as Submission;
 
     if (!question) {
       res.status(400).send({ message: "No question provided." });
@@ -45,13 +47,13 @@ export const serve = async (bot: ExtendedClient) => {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle("New Question!")
+      .setTitle(SubmissionTitles[category])
       .setDescription(question)
       .addFields([{ name: "Asked by", value: user, inline: true }]);
 
     const button = new ButtonBuilder()
-      .setCustomId(`respond`)
-      .setLabel("Answer Question")
+      .setCustomId(`respond-${category}`)
+      .setLabel(SubmissionButtonTitles[category])
       .setStyle(ButtonStyle.Success);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
