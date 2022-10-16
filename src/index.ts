@@ -22,7 +22,7 @@ import { serve } from "./server/serve";
   const bot = new Client({
     intents: [GatewayIntentBits.Guilds],
   }) as ExtendedClient;
-  const twitter = twitterClient();
+  const twitter = twitterClient().readWrite;
   bot.token = process.env.BOT_TOKEN || process.exit(1);
   bot.ownerId = process.env.USER_ID || process.exit(1);
 
@@ -56,14 +56,33 @@ import { serve } from "./server/serve";
 
       const questionImage = await generateQuestionImage(question, category);
 
-      const media = await twitter.post("media/upload", {
-        media: questionImage,
-      });
+      const media = await twitter.v1
+        .uploadMedia(questionImage, { mimeType: "Buffer" })
+        .catch((err) => {
+          console.error("media bad");
+          console.error(err);
+          process.exit(1);
+        });
 
-      await twitter.post("statuses/update", {
-        status: answer,
-        media_ids: media.media_id_string,
-      });
+      await twitter.v1
+        .createMediaMetadata(media, {
+          alt_text: { text: `${question} - ${answer}`.slice(0, 420) },
+        })
+        .catch((err) => {
+          console.error("alt text bad");
+          console.error(err);
+          process.exit(1);
+        });
+
+      await twitter.v1
+        .tweet(answer, {
+          media_ids: media,
+        })
+        .catch((err) => {
+          console.error("post bad");
+          console.error(err);
+          process.exit(1);
+        });
 
       const newEmbed = new EmbedBuilder()
         .setTitle(oldEmbed.title || "Answered Question!")
