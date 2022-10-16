@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
-import Twitter from "twitter";
+import { TwitterApi } from "twitter-api-v2";
 
 /**
  * Generates a twitter client!
  *
- * @returns {Twitter} A twitter client.
+ * @returns {TwitterApi} A twitter client.
  */
-export const twitterClient = (): Twitter => {
+export const twitterClient = (): TwitterApi => {
   const consumerKey = process.env.CONSUMER_KEY;
   const consumerSecret = process.env.CONSUMER_SECRET;
   const accessToken = process.env.ACCESS_TOKEN;
@@ -16,11 +16,11 @@ export const twitterClient = (): Twitter => {
     process.exit(1);
   }
 
-  const twitterClient = new Twitter({
-    consumer_key: consumerKey,
-    consumer_secret: consumerSecret,
-    access_token_key: accessToken,
-    access_token_secret: accessSecret,
+  const twitterClient = new TwitterApi({
+    appKey: consumerKey,
+    appSecret: consumerSecret,
+    accessToken,
+    accessSecret,
   });
 
   return twitterClient;
