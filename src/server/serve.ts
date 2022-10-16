@@ -11,7 +11,11 @@ import {
 } from "discord.js";
 import express from "express";
 
-import { SubmissionButtonTitles, SubmissionTitles } from "../interfaces/Enums";
+import {
+  SubmissionButtonEmotes,
+  SubmissionButtonTitles,
+  SubmissionTitles,
+} from "../interfaces/Enums";
 import { ExtendedClient } from "../interfaces/ExtendedClient";
 import { Submission } from "../interfaces/Submission";
 
@@ -54,7 +58,8 @@ export const serve = async (bot: ExtendedClient) => {
     const button = new ButtonBuilder()
       .setCustomId(`respond-${category}`)
       .setLabel(SubmissionButtonTitles[category])
-      .setStyle(ButtonStyle.Success);
+      .setStyle(ButtonStyle.Success)
+      .setEmoji(SubmissionButtonEmotes[category]);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
 
