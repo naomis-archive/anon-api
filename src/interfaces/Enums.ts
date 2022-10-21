@@ -20,6 +20,7 @@ export enum SubmissionButtonEmotes {
   flirt = "<:Naomato:1024567408985387028> ",
   compliment = "<:NaomiBlush:1024567416728076399>",
   never = "<:NaomiHuh:1024567448994856993>",
+  nsfw = "🔞",
 }
 
 export enum ImageTitles {
