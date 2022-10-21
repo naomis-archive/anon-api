@@ -122,8 +122,8 @@ import { serve } from "./server/serve";
         }
         const category = interaction.customId.split("-")[1] as Category;
         const modalId = interaction.customId.startsWith("respondnsfw")
-          ? `sfw-${interaction.message.id}-${category}`
-          : `nsfw-${interaction.message.id}-${category}`;
+          ? `nsfw-${interaction.message.id}-${category}`
+          : `sfw-${interaction.message.id}-${category}`;
         const modal = new ModalBuilder()
           .setCustomId(modalId)
           .setTitle("Enter Your Response");
