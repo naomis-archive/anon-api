@@ -22,7 +22,6 @@ import { serve } from "./server/serve";
   const bot = new Client({
     intents: [GatewayIntentBits.Guilds],
   }) as ExtendedClient;
-  const twitter = twitterClient().readWrite;
   bot.token = process.env.BOT_TOKEN || process.exit(1);
   bot.ownerId = process.env.USER_ID || process.exit(1);
 
@@ -43,11 +42,11 @@ import { serve } from "./server/serve";
   bot.on("interactionCreate", async (interaction) => {
     if (interaction.type === InteractionType.ModalSubmit) {
       await interaction.deferUpdate();
-      const [, messageId, category] = interaction.customId.split("-") as [
-        string,
-        string,
-        Category
-      ];
+      const [resType, messageId, category] = interaction.customId.split(
+        "-"
+      ) as [string, string, Category];
+      const twitter = twitterClient(resType === "nsfw").readWrite;
+
       const message = await bot.channel.messages.fetch(messageId);
       const question = message.embeds[0].description || "unknown";
       const answer = interaction.fields.getTextInputValue("answer");
@@ -66,7 +65,9 @@ import { serve } from "./server/serve";
 
       await twitter.v1
         .createMediaMetadata(media, {
-          alt_text: { text: `${question} - ${answer}`.slice(0, 420) },
+          alt_text: {
+            text: `Question:\n${question}\n\nAnswer:\n${answer}`.slice(0, 1000),
+          },
         })
         .catch((err) => {
           console.error("alt text bad");
@@ -99,6 +100,10 @@ import { serve } from "./server/serve";
             name: "Response",
             value: answer,
           },
+          {
+            name: "Account",
+            value: resType === "nsfw" ? "NaomiNSFW" : "NaomiLGBT",
+          },
         ]);
       await interaction.message?.edit({
         embeds: [newEmbed],
@@ -116,8 +121,11 @@ import { serve } from "./server/serve";
           return;
         }
         const category = interaction.customId.split("-")[1] as Category;
+        const modalId = interaction.customId.startsWith("respondnsfw")
+          ? `sfw-${interaction.message.id}-${category}`
+          : `nsfw-${interaction.message.id}-${category}`;
         const modal = new ModalBuilder()
-          .setCustomId(`res-${interaction.message.id}-${category}`)
+          .setCustomId(modalId)
           .setTitle("Enter Your Response");
 
         const input = new TextInputBuilder()

@@ -60,8 +60,16 @@ export const serve = async (bot: ExtendedClient) => {
       .setLabel(SubmissionButtonTitles[category])
       .setStyle(ButtonStyle.Success)
       .setEmoji(SubmissionButtonEmotes[category]);
+    const nsfwButton = new ButtonBuilder()
+      .setCustomId(`respondnsfw-${category}`)
+      .setLabel(SubmissionButtonTitles[category])
+      .setStyle(ButtonStyle.Success)
+      .setEmoji(SubmissionButtonEmotes.nsfw);
 
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      button,
+      nsfwButton
+    );
 
     await bot.channel.send({
       embeds: [embed],
