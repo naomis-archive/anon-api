@@ -15,11 +15,11 @@ export enum SubmissionButtonTitles {
 }
 
 export enum SubmissionButtonEmotes {
-  question = "<:NaomiGrin:1024567443668078614>",
-  confession = "<:NaomiThink:1024567508713345044> ",
-  flirt = "<:Naomato:1024567408985387028> ",
-  compliment = "<:NaomiBlush:1024567416728076399>",
-  never = "<:NaomiHuh:1024567448994856993>",
+  question = "<:NaomiGrin:1065884732119859200>",
+  confession = "<:NaomiThink:1065906168414863360>",
+  flirt = "<:Naomato:1065883670537318400>",
+  compliment = "<:NaomiBlush:1065883706000158770>",
+  never = "<:NaomiHuh:1065884954728337420>",
   nsfw = "🔞",
 }
 
