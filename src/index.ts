@@ -11,8 +11,8 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { ImageFooters, ImageTitles } from "./interfaces/Enums";
 
+import { ImageFooters, ImageTitles } from "./interfaces/Enums";
 import { ExtendedClient } from "./interfaces/ExtendedClient";
 import { Category } from "./interfaces/Submission";
 import { generateQuestionImage } from "./modules/generateQuestionImage";
