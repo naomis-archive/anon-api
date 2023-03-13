@@ -11,6 +11,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
+import { ImageFooters, ImageTitles } from "./interfaces/Enums";
 
 import { ExtendedClient } from "./interfaces/ExtendedClient";
 import { Category } from "./interfaces/Submission";
@@ -66,7 +67,10 @@ import { serve } from "./server/serve";
       await twitter.v1
         .createMediaMetadata(media, {
           alt_text: {
-            text: `Question:\n${question}\n\nAnswer:\n${answer}`.slice(0, 1000),
+            text: `${ImageTitles[category]}\n\nAnswer:\n${answer}\n\n${ImageFooters[category]}`.slice(
+              0,
+              1000
+            ),
           },
         })
         .catch((err) => {
