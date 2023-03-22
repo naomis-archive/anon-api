@@ -50,9 +50,11 @@ export const serve = async (bot: ExtendedClient) => {
       return;
     }
 
+    const trimmedQuestion = question.replace(/\n{2,}/g, "\n");
+
     const embed = new EmbedBuilder()
       .setTitle(SubmissionTitles[category])
-      .setDescription(question)
+      .setDescription(trimmedQuestion)
       .addFields([{ name: "Asked by", value: user, inline: true }]);
 
     const button = new ButtonBuilder()
