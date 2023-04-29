@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {
   ActionRowBuilder,
   ChannelType,
@@ -35,8 +34,9 @@ import { serve } from "./server/serve";
       console.error("Channel not found or not a text channel.");
       process.exit(1);
     }
-    // eslint-disable-next-line require-atomic-updates
-    bot.channel = channel;
+    if (bot.channel !== channel) {
+      bot.channel = channel;
+    }
     console.log("Bot is ready!");
   });
 
