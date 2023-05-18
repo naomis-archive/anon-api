@@ -55,7 +55,7 @@ import { serve } from "./server/serve";
 
       const attachment = new AttachmentBuilder(questionImage, {
         name: "question.png",
-        description: `${ImageTitles[category]}\n\nAnswer:\n${answer}\n\n${ImageFooters[category]}`,
+        description: `Category: ${ImageTitles[category]}\n\nSubmission: ${question}\n\nFooter: ${ImageFooters[category]}`,
       });
 
       await interaction.message?.edit({
