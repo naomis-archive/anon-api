@@ -1,8 +1,8 @@
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   ChannelType,
   Client,
-  EmbedBuilder,
   GatewayIntentBits,
   InteractionType,
   ModalActionRowComponentBuilder,
@@ -13,7 +13,6 @@ import {
 
 import { ImageFooters, ImageTitles } from "./interfaces/Enums";
 import { ExtendedClient } from "./interfaces/ExtendedClient";
-import { MediaResponse } from "./interfaces/MastodonResponses";
 import { Category } from "./interfaces/Submission";
 import { generateQuestionImage } from "./modules/generateQuestionImage";
 import { serve } from "./server/serve";
@@ -52,74 +51,17 @@ import { serve } from "./server/serve";
       const question = message.embeds[0].description || "unknown";
       const answer = interaction.fields.getTextInputValue("answer");
 
-      const oldEmbed = message.embeds[0];
-
       const questionImage = await generateQuestionImage(question, category);
 
-      const form = new FormData();
-      form.append("file", new Blob([questionImage]), "question.png");
-      form.append(
-        "description",
-        `${ImageTitles[category]}\n\nAnswer:\n${answer}\n\n${ImageFooters[category]}`
-      );
-
-      const rawMedia = await fetch("https://mastodon.naomi.lgbt/api/v2/media", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.MASTODON_AUTH_TOKEN}`,
-        },
-        body: form,
-      }).catch((err) => {
-        console.log("Media failed.");
-        console.error(err);
-        process.exit(1);
+      const attachment = new AttachmentBuilder(questionImage, {
+        name: "question.png",
+        description: `${ImageTitles[category]}\n\nAnswer:\n${answer}\n\n${ImageFooters[category]}`,
       });
 
-      const media = (await rawMedia.json()) as MediaResponse;
-
-      console.log(JSON.stringify(media, null, 2));
-
-      const rawPost = await fetch(
-        `https://mastodon.naomi.lgbt/api/v1/statuses`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.MASTODON_AUTH_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: answer,
-            media_ids: [media.id],
-          }),
-        }
-      ).catch((err) => {
-        console.log("Post failed.");
-        console.error(err);
-        process.exit(1);
-      });
-
-      const post = await rawPost.json();
-
-      console.log(JSON.stringify(post, null, 2));
-
-      const newEmbed = new EmbedBuilder()
-        .setTitle(oldEmbed.title || "Answered Question!")
-        .setDescription(
-          oldEmbed.description ||
-            "Something went wrong and the question was lost."
-        )
-        .addFields([
-          {
-            name: oldEmbed.fields?.[0].name || "Asked By",
-            value: oldEmbed.fields?.[0].value || "Anonymous",
-          },
-          {
-            name: "Response",
-            value: answer,
-          },
-        ]);
       await interaction.message?.edit({
-        embeds: [newEmbed],
+        content: answer,
+        embeds: [],
+        files: [attachment],
         components: [],
       });
     }
