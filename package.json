@@ -28,7 +28,7 @@
     "dotenv": "16.0.3",
     "express": "4.18.2",
     "node-html-to-image": "3.3.0",
-    "twitter-api-v2": "1.14.2"
+    "twitter-api-v2": "1.14.3"
   },
   "scripts": {
     "prebuild": "rm -rf ./prod",
