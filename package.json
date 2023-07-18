@@ -4,7 +4,7 @@
   "description": "The API for my anonymous question app",
   "main": "prod/index.js",
   "engines": {
-    "node": "18.16.1",
+    "node": "18.17.0",
     "npm": "9.8.0"
   },
   "devDependencies": {
