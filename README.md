@@ -4,7 +4,7 @@ This is the API for my anonymous inbox app.
 
 ## Live Version
 
-This page is currently deployed. [View the live website.](https://anon.naomi.lgbt)-->
+This page is currently deployed. [View the live website.](https://anon.naomi.lgbt)
 
 ## Feedback and Bugs
 
